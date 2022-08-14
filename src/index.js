@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { App } from 'components/App';
-import theme from 'components/Common/Theme.jsx';
+import { ThemeProvider } from 'styled-components';
+import { App } from 'components/App/App';
+import { theme } from 'components/Common/Theme.jsx';
 import './index.css';
 
 ///////////////////
@@ -13,7 +14,7 @@ import './index.css';
 // передав в пропе basename точное название твоего репозитория.
 // Слеши в начале и конце строки обязательны.
 //
-// <BrowserRouter basename="/_____repo_name______/">
+// <BrowserRouter basename="/goit-react-hw-03-image-finder/">
 //   <App />
 // </BrowserRouter>
 //
