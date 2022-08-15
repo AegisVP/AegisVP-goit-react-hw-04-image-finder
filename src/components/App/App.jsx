@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component, useEffect, useState } from 'react';
 import { getImages } from 'Services/services';
 
 import { Box } from 'components/Common/Box.styled';
@@ -14,76 +14,83 @@ const LS_LAST_QUERY = 'goit_hw_lastQuery';
 const LS_LAST_PAGE = 'goit_hw_lastPage';
 const DEFAULT_SEARCH = 'Red poppy flower';
 
-const initialStateValues = {
-  images: [],
-  query: '',
-  page: 1,
-  totalHits: 0,
-  errorMessage: '',
-  isLoading: false,
-  showModalUrl: '',
-};
+// const initialStateValues = {
+//   images: [],
+//   query: '',
+//   page: 1,
+//   totalHits: 0,
+//   errorMessage: '',
+//   isLoading: false,
+//   showModalUrl: '',
+// };
 
-export class App extends Component {
-  state = { ...initialStateValues };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModalUrl, setShowModalUrl] = useState('');
 
-  componentDidMount() {
+  useEffect(() => {
     const lsQuery = localStorage.getItem(LS_LAST_QUERY)?.toString();
     const lsPage = parseInt(localStorage.getItem(LS_LAST_PAGE)?.toString());
 
-    if (lsQuery && lsPage) this.setState({ query: lsQuery, page: lsPage });
-    else this.setState({ query: DEFAULT_SEARCH, page: 1 });
-  }
+    setQuery(lsQuery && lsPage ? lsQuery : DEFAULT_SEARCH);
+    setPage(lsQuery && lsPage ? lsPage : 1);
+  }, []);
 
-  componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
+  useEffect(() => {
+    loadImages({ query, page });
+  }, [page, query]);
 
-    if (prevState.query !== query || prevState.page !== page) this.loadImages({ query, page });
-  }
-
-  loadImages = async ({ query, page }) => {
+  const loadImages = async ({ query, page }) => {
     localStorage.setItem(LS_LAST_QUERY, query);
     localStorage.setItem(LS_LAST_PAGE, parseInt(page));
 
-    this.setState({ images: [], errorMessage: '', isLoading: true, totalHits: 0 });
+    setIsLoading(true);
+    setTotalHits(0);
+    setErrorMessage('');
+    setImages([]);
 
     const { data } = await getImages({ query, page });
 
     if (data) {
-      if (parseInt(data?.totalHits) > 0) this.setState({ images: data.hits, totalHits: data.totalHits });
-      else this.setState({ errorMessage: 'No images found' });
-    } else this.setState({ errorMessage: 'No images loaded (Error occured)' });
+      if (parseInt(data?.totalHits) > 0) {
+        setImages(data.hits);
+        setTotalHits(data.totalHits);
+      } else setErrorMessage('No images found');
+    } else setErrorMessage('No images loaded (Error occured)');
 
-    this.setState({ isLoading: false });
+    setIsLoading(false);
   };
 
-  onLoadMore = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const onLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  onSearch = (searchQuery = DEFAULT_SEARCH) => {
+  const onSearch = (searchQuery = DEFAULT_SEARCH) => {
     if (searchQuery === '') searchQuery = DEFAULT_SEARCH;
-    this.setState({ query: searchQuery, page: 1 });
+    setQuery(searchQuery);
+    setPage(1);
   };
 
-  onToggleModalImage = (url = '') => {
-    this.setState({ showModalUrl: url });
+  const onToggleModalImage = (url = '') => {
+    setShowModalUrl(url);
   };
 
-  onModalKeyDown = e => {
-    if (e.code === 'Escape') this.onToggleModalImage('');
+  const onModalKeyDown = e => {
+    if (e.code === 'Escape') onToggleModalImage('');
   };
-
-  render() {
-    const { images, errorMessage, totalHits, page, isLoading, showModalUrl } = this.state;
 
     return (
       <Box padding="0" height="100vh">
-        <Searchbar onSubmit={this.onSearch} />
+        <Searchbar onSubmit={onSearch} />
         <Box flex="1 0 auto" minHeight="calc(100vh - (220px + 40px))">
           {/* Image gallery */}
           {images.length > 0 ? (
-            <ImageGallery onToggleModalImage={this.onToggleModalImage} images={images} />
+            <ImageGallery onToggleModalImage={onToggleModalImage} images={images} />
           ) : (
             <Message>{errorMessage}</Message>
           )}
@@ -91,7 +98,7 @@ export class App extends Component {
           {/* Load more button */}
           {totalHits > page * 12 && (
             <Box display="flex" justifyContent="center" width="100%" mt="20px">
-              <Button onClick={this.onLoadMore}>Load more...</Button>
+              <Button onClick={onLoadMore}>Load more...</Button>
             </Box>
           )}
         </Box>
@@ -101,7 +108,7 @@ export class App extends Component {
 
         {/* Modal window */}
         {showModalUrl !== '' && (
-          <Modal onKeyDown={this.onModalKeyDown} onCloseModal={() => this.onToggleModalImage('')}>
+          <Modal onKeyDown={onModalKeyDown} onCloseModal={() => onToggleModalImage('')}>
             <img src={showModalUrl} width="1280" alt="" />
           </Modal>
         )}
@@ -109,5 +116,92 @@ export class App extends Component {
         <Footer />
       </Box>
     );
-  }
+};
+
+export class OldApp extends Component {
+  // state = { ...initialStateValues };
+
+  // componentDidMount() {
+  //   const lsQuery = localStorage.getItem(LS_LAST_QUERY)?.toString();
+  //   const lsPage = parseInt(localStorage.getItem(LS_LAST_PAGE)?.toString());
+
+  //   if (lsQuery && lsPage) this.setState({ query: lsQuery, page: lsPage });
+  //   else this.setState({ query: DEFAULT_SEARCH, page: 1 });
+  // }
+
+  // componentDidUpdate(_, prevState) {
+  //   const { query, page } = this.state;
+
+  //   if (prevState.query !== query || prevState.page !== page) this.loadImages({ query, page });
+  // }
+
+  // loadImages = async ({ query, page }) => {
+  //   localStorage.setItem(LS_LAST_QUERY, query);
+  //   localStorage.setItem(LS_LAST_PAGE, parseInt(page));
+
+  //   this.setState({ images: [], errorMessage: '', isLoading: true, totalHits: 0 });
+
+  //   const { data } = await getImages({ query, page });
+
+  //   if (data) {
+  //     if (parseInt(data?.totalHits) > 0) this.setState({ images: data.hits, totalHits: data.totalHits });
+  //     else this.setState({ errorMessage: 'No images found' });
+  //   } else this.setState({ errorMessage: 'No images loaded (Error occured)' });
+
+  //   this.setState({ isLoading: false });
+  // };
+
+  // onLoadMore = () => {
+  //   this.setState(({ page }) => ({ page: page + 1 }));
+  // };
+
+  // onSearch = (searchQuery = DEFAULT_SEARCH) => {
+  //   if (searchQuery === '') searchQuery = DEFAULT_SEARCH;
+  //   this.setState({ query: searchQuery, page: 1 });
+  // };
+
+  // onToggleModalImage = (url = '') => {
+  //   this.setState({ showModalUrl: url });
+  // };
+
+  // onModalKeyDown = e => {
+  //   if (e.code === 'Escape') this.onToggleModalImage('');
+  // };
+
+  // render() {
+  //   const { images, errorMessage, totalHits, page, isLoading, showModalUrl } = this.state;
+
+  //   return (
+  //     <Box padding="0" height="100vh">
+  //       <Searchbar onSubmit={this.onSearch} />
+  //       <Box flex="1 0 auto" minHeight="calc(100vh - (220px + 40px))">
+  //         {/* Image gallery */}
+  //         {images.length > 0 ? (
+  //           <ImageGallery onToggleModalImage={this.onToggleModalImage} images={images} />
+  //         ) : (
+  //           <Message>{errorMessage}</Message>
+  //         )}
+
+  //         {/* Load more button */}
+  //         {totalHits > page * 12 && (
+  //           <Box display="flex" justifyContent="center" width="100%" mt="20px">
+  //             <Button onClick={this.onLoadMore}>Load more...</Button>
+  //           </Box>
+  //         )}
+  //       </Box>
+
+  //       {/* Loader */}
+  //       {isLoading && <Loader />}
+
+  //       {/* Modal window */}
+  //       {showModalUrl !== '' && (
+  //         <Modal onKeyDown={this.onModalKeyDown} onCloseModal={() => this.onToggleModalImage('')}>
+  //           <img src={showModalUrl} width="1280" alt="" />
+  //         </Modal>
+  //       )}
+
+  //       <Footer />
+  //     </Box>
+  //   );
+  // }
 }
